@@ -211,18 +211,33 @@ void read_key()
 /* Clear and fill the screen */
 void print_screen()
 {
+   static int first = 1;
+   static unsigned short prev_row, prev_col;
+   static int prev_smode = -1;
+
    /* Get Console Size */
    if (ioctl(0, TIOCGWINSZ, &win_sz) < 0) {
       win_sz.ws_row = 24;
       win_sz.ws_col = 80;
    }
 
-   /* Flush and print screen */
-   fprintf( stderr, "\33[1;1H" );
+   /* Fully clear the terminal on first draw, on resize and on view change,
+    * so no previous terminal content is left behind */
+   if (first || win_sz.ws_row != prev_row || win_sz.ws_col != prev_col ||
+       smode != prev_smode) {
+      printf("\33[2J");
+      first = 0;
+      prev_row = win_sz.ws_row;
+      prev_col = win_sz.ws_col;
+      prev_smode = smode;
+   }
+
+   /* Print screen (all output through stdout to keep ordering) */
+   printf("\33[H");
    pthread_mutex_lock(data_access);
    fill_screen();
    pthread_mutex_unlock(data_access);
-   fprintf( stderr, "\33[J" );
+   printf("\33[J");
    fflush(stdout);
 }
 
