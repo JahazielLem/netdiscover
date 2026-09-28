@@ -278,7 +278,27 @@ int main(int argc, char **argv)
          exit(1);
       }
 
-      datos.interface = strdup(devices->name);
+      /* Prefer the first up, non-loopback device with an IPv4 address
+       * (on macOS the first device is often a tunnel or bridge). */
+      pcap_if_t *dev, *chosen = NULL;
+      for (dev = devices; dev != NULL && chosen == NULL; dev = dev->next) {
+         pcap_addr_t *a;
+         if (dev->flags & PCAP_IF_LOOPBACK)
+            continue;
+#ifdef PCAP_IF_UP
+         if (!(dev->flags & PCAP_IF_UP))
+            continue;
+#endif
+         for (a = dev->addresses; a != NULL; a = a->next)
+            if (a->addr != NULL && a->addr->sa_family == AF_INET) {
+               chosen = dev;
+               break;
+            }
+      }
+      if (chosen == NULL)
+         chosen = devices;
+
+      datos.interface = strdup(chosen->name);
       pcap_freealldevs(devices);
    }
 

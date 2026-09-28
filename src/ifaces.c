@@ -38,9 +38,18 @@
 #include "data_al.h"
 
 
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
+
+#ifdef __linux__
 #include <net/if_arp.h>
+#else
+#include <ifaddrs.h>
+#include <net/if_dl.h>
+#include <net/if_types.h>
+#endif
 
 
 #define ARP_REPLY "\x00\x02"
@@ -86,10 +95,21 @@ void *start_sniffer(void *args)
 
    datos = (struct t_data *)args;
 
-   /* Open interface */
-   descr = pcap_open_live(datos->interface, BUFSIZ, 1, PCAP_TOUT, errbuf);
+   /* Open interface. Immediate mode avoids BPF buffering delays
+    * (notably on macOS/BSD, where packets are otherwise held until
+    * the buffer fills or the timeout expires). */
+   descr = pcap_create(datos->interface, errbuf);
    if(descr == NULL) {
-      printf("pcap_open_live(): %s\n", errbuf);
+      printf("pcap_create(): %s\n", errbuf);
+      sighandler(0); // QUIT
+   }
+   pcap_set_snaplen(descr, BUFSIZ);
+   pcap_set_promisc(descr, 1);
+   pcap_set_timeout(descr, PCAP_TOUT);
+   pcap_set_immediate_mode(descr, 1);
+   if (pcap_activate(descr) < 0) {
+      printf("pcap_activate(): %s\n", pcap_geterr(descr));
+      pcap_close(descr);
       sighandler(0); // QUIT
    }
 
@@ -216,8 +236,34 @@ void get_mac(char *disp)
   //unsigned char* mac = (unsigned char*) ;
   memcpy(smac, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
 #else
-   //printf("Unsuported OS\n");
-   //exit(1);
+  /* BSD / macOS: read the link-layer address with getifaddrs() */
+  struct ifaddrs *ifap, *ifa;
+  int found = 0;
+
+  if (getifaddrs(&ifap) == -1) {
+    printf("getifaddrs(): %s\n", strerror(errno));
+    exit(1);
+  }
+
+  for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+    if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_LINK ||
+        strcmp(ifa->ifa_name, disp) != 0)
+      continue;
+
+    struct sockaddr_dl *sdl = (struct sockaddr_dl *) ifa->ifa_addr;
+    if (sdl->sdl_type != IFT_ETHER || sdl->sdl_alen != ETH_ALEN)
+      continue;
+
+    memcpy(smac, LLADDR(sdl), ETH_ALEN);
+    found = 1;
+    break;
+  }
+  freeifaddrs(ifap);
+
+  if (!found) {
+    printf("%s: not an Ethernet interface\n", disp);
+    exit(1);
+  }
 #endif
 }
 

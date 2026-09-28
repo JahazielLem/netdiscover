@@ -34,6 +34,12 @@ extern "C"
 {
 #endif
 
+#include <stdint.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <pcap.h>
 #include <netinet/if_ether.h>
 #include "data_al.h"

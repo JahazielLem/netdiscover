@@ -27,7 +27,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <netinet/if_ether.h>
 
 #include "ifaces.h"
 #include "fhandle.h"

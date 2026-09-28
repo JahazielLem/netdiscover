@@ -35,6 +35,20 @@ $ make
 # make install
 ```
 
+### macOS
+
+libpcap ships with macOS; you only need the autotools (e.g. via Homebrew):
+
+```
+$ brew install autoconf automake
+$ ./autogen.sh
+$ ./configure
+$ make
+$ sudo ./src/netdiscover -i en0
+```
+
+Root privileges are required to open the BPF devices.
+
 To return to original source code, you can use '$ make distclean' command.
 
 
