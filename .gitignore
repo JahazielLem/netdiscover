@@ -14,3 +14,4 @@ configure
 stamp-h1
 src/.deps/
 src/netdiscover
+netdiscover-*.tar.gz

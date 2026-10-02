@@ -8,6 +8,7 @@ man_MANS= doc/netdiscover.8
 EXTRA_DIST = \
 	autogen.sh \
 	doc/create-man.sh \
+	doc/MACOS.md \
 	doc/netdiscover.8 \
 	doc/netdiscover.txt \
 	README.md \

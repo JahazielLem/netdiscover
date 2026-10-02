@@ -1,3 +1,11 @@
+Unreleased
+   * Added macOS support (see doc/MACOS.md):
+     - Read the interface MAC address via getifaddrs()/AF_LINK on macOS/BSD.
+     - Use pcap immediate mode in the sniffer to avoid BPF buffering delays.
+     - Portable header ordering for netinet/if_ether.h.
+     - Auto-select an up, non-loopback interface with an IPv4 address.
+   * Fixed leftover terminal text in the interactive screen.
+
 Netdiscover 0.21 - 14 Aug 2025
    * update-oui-database.sh:
      - Using mtime to define DATA2 to update-oui-database.sh reproducible.

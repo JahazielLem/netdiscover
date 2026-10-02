@@ -47,7 +47,8 @@ $ make
 $ sudo ./src/netdiscover -i en0
 ```
 
-Root privileges are required to open the BPF devices.
+Root privileges are required to open the BPF devices. See doc/MACOS.md
+for details and troubleshooting.
 
 To return to original source code, you can use '$ make distclean' command.
 
